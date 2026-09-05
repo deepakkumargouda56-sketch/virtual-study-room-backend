@@ -77,8 +77,7 @@ const Rooms = () => {
     }catch(error){
 
 
-      console.log(error);
-
+      console.error("Room error:", error);
 
       toaster.create({
 
@@ -169,8 +168,7 @@ const Rooms = () => {
     }catch(error){
 
 
-      console.log(error);
-
+      console.error("Room error:", error);
 
       toaster.create({
 
@@ -231,7 +229,7 @@ const Rooms = () => {
     }catch(error){
 
 
-      console.log(error);
+     console.error("Room error:", error);
 
 
 

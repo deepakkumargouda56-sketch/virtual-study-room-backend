@@ -209,7 +209,7 @@ setRoom(response.data.room);
 
 }catch(error){
 
-console.log(error);
+console.error("Study room error:", error);
 
 }
 
@@ -233,7 +233,7 @@ setMembers(response.data.members);
 
 }catch(error){
 
-console.log(error);
+console.error("Study room error:", error);
 
 }
 

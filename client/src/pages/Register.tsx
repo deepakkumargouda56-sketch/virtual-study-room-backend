@@ -72,7 +72,7 @@ const Register = () => {
     } catch(error) {
 
 
-      console.log(error);
+     console.error("Registration failed:", error);
 
 
 

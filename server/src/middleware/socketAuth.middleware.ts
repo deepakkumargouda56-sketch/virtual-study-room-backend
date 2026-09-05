@@ -7,7 +7,6 @@ export const socketAuth = (
 ) => {
   try {
     const token = socket.handshake.auth.token;
-    console.log("Token:", token);
 
     if (!token) {
       return next(new Error("Authentication token missing"));
@@ -25,4 +24,4 @@ export const socketAuth = (
   }
 };
 
-console.log("Socket Auth Middleware Running");
+console.info("Socket authentication middleware initialized");

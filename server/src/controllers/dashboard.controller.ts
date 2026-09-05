@@ -24,7 +24,7 @@ export const getDashboardStatsController = async (
       stats,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Dashboard error:", error);
 
     return res.status(500).json({
       message: "Internal Server Error",
@@ -68,7 +68,7 @@ recentSessions:sessions
 }
 catch(error){
 
-console.log(error);
+console.error("Dashboard error:", error);
 
 res.status(500).json({
 message:"Internal Server Error"

@@ -3,7 +3,6 @@ dotenv.config();
 
 import http from "http";
 import app from "./app";
-import testConnection from "./config/testConnection";
 import { Server } from "socket.io";
 import { socketAuth } from "./middleware/socketAuth.middleware";
 import { createStudySession } from "./models/studySession.model";
@@ -95,8 +94,7 @@ const formatDuration = (milliseconds:number)=>{
 io.on("connection",(socket)=>{
 
 
-console.log("A user connected:",socket.id);
-
+console.info("Socket user connected");
 
 
 socket.on(
@@ -198,11 +196,6 @@ roomId:user.roomId
 
 
 
-console.log(
-"START STUDY:",
-user
-);
-
 
 
 io.to(`room-${user.roomId}`)
@@ -240,7 +233,7 @@ const startTime = studySessions.get(socket.id);
 
 if(!startTime){
 
-console.log("Study session not found");
+console.warn("Study session not found");
 
 return;
 
@@ -350,10 +343,7 @@ users:getOnlineUsers(roomId)
 
 
 
-console.log(
-"A user disconnected:",
-socket.id
-);
+console.info("Socket user disconnected");
 
 
 
@@ -362,16 +352,10 @@ socket.id
 
 
 });
-
-
-
-testConnection();
 
 
 server.listen(PORT,()=>{
 
-console.log(
-`Server is running on http://localhost:${PORT}`
-);
+console.info(`Server started on port ${PORT}`);
 
 });

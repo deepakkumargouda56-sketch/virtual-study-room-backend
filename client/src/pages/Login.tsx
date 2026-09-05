@@ -57,7 +57,7 @@ const Login = () => {
     } catch(error) {
 
 
-      console.log(error);
+      console.error("Login failed:", error);
 
 
       toaster.create({

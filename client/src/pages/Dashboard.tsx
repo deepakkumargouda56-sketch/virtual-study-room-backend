@@ -162,8 +162,7 @@ const Dashboard = () => {
             key={room.id}
             title={room.name}
             value={`${room.max_members} Members`}
-            onClick={() => {
-              console.log("Created room clicked:", room.id);
+            onClick={() => { 
               navigate(`/study-room/${room.id}`);
             }}
           />
@@ -204,7 +203,6 @@ const Dashboard = () => {
             title={room.name}
             value={`${room.max_members} Members`}
             onClick={() => {
-              console.log("Joined room clicked:", room.id);
               navigate(`/study-room/${room.id}`);
             }}
           />
