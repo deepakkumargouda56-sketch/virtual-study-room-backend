@@ -10,7 +10,11 @@ app.use(express.json());
 
 app.use(
   cors({
-    origin:"https://virtual-study-room-frontend-ivory.vercel.app",
+    origin: [
+      "http://localhost:5173",
+      "https://virtual-study-room-frontend-ivory.vercel.app",
+      "https://virtual-study-room-frontend-git-main-deepak-a429.vercel.app"
+    ],
     credentials: true,
   })
 );
