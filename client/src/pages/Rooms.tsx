@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { toaster } from "../components/Toaster";
 import PremiumCard from "../components/PremiumCard";
-
 import {
   Heading,
   Stack,
@@ -12,16 +11,25 @@ import {
   Textarea,
   Spinner,
   SimpleGrid,
+  HStack,
+  Dialog,
 } from "@chakra-ui/react";
 
 import api from "../api/axios";
 
+const token = localStorage.getItem("token");
+
+const userId = token
+  ? JSON.parse(atob(token.split(".")[1])).id
+  : null;
+  console.log("Logged User ID:", userId);
 
 interface Room {
   id: number;
   name: string;
   description: string;
   max_members: number;
+  created_by: number;
 }
 
 
@@ -45,6 +53,8 @@ const Rooms = () => {
   const [loading,setLoading] = useState(false);
 
   const [joiningRoom,setJoiningRoom] = useState<number | null>(null);
+
+  const [deleteRoomId, setDeleteRoomId] = useState<number | null>(null);
 
 
 
@@ -254,7 +264,87 @@ const Rooms = () => {
   };
 
 
+  const editRoom = async (room: Room) => {
 
+  const name = prompt("Enter new room name", room.name);
+
+  if (!name) return;
+
+
+  const description = prompt(
+    "Enter new description",
+    room.description
+  );
+
+  if (!description) return;
+
+
+  const max_members = Number(
+    prompt(
+      "Enter maximum members",
+      room.max_members.toString()
+    )
+  );
+
+
+  try {
+
+    await api.put(`/rooms/${room.id}`, {
+      name,
+      description,
+      max_members,
+    });
+
+
+    toaster.create({
+      title:"Room updated successfully",
+      type:"success",
+    });
+
+
+    fetchRooms();
+
+
+  } catch(error) {
+
+    console.error(error);
+
+    toaster.create({
+      title:"Failed to update room",
+      type:"error",
+    });
+
+  }
+
+};
+
+
+
+  const deleteRoom = async (id:number)=>{
+
+  try{
+
+    await api.delete(`/rooms/${id}`);
+
+    toaster.create({
+      title:"Room deleted successfully",
+      type:"success",
+    });
+
+    fetchRooms();
+
+  }catch(error){
+
+    console.error("Delete room error:", error);
+
+    toaster.create({
+      title:"Unable to delete room",
+      type:"error",
+    });
+
+  }
+
+};
 
 
 
@@ -451,43 +541,27 @@ gap="6"
 
 
 {
-
 rooms.map((room)=>(
-
+  console.log("Room Data:", room),
 
 <PremiumCard key={room.id}>
-
 
 <Stack gap="4">
 
 
 <Heading size="md">
-
 {room.name}
-
 </Heading>
 
 
-
-
 <Text>
-
 {room.description}
-
 </Text>
-
-
-
 
 
 <Text>
-
 👥 Maximum Members : {room.max_members}
-
 </Text>
-
-
-
 
 
 
@@ -495,12 +569,13 @@ rooms.map((room)=>(
 
 colorPalette="blue"
 
+width="full"
+
 onClick={()=>joinRoom(room.id)}
 
 disabled={joiningRoom===room.id}
 
 >
-
 
 {
 
@@ -516,21 +591,84 @@ joiningRoom===room.id
 
 }
 
+</Button>
+
+
+
+{
+room.created_by === userId && (
+
+<Stack
+
+pt="3"
+
+borderTopWidth="1px"
+
+gap="3"
+
+>
+
+
+<Text
+
+fontSize="sm"
+
+color="gray.500"
+
+>
+
+Room Owner Actions
+
+</Text>
+
+<Button
+
+variant="outline"
+
+colorPalette="blue"
+
+width="full"
+
+onClick={()=>editRoom(room)}
+
+>
+
+✏️ Edit Room
+
+</Button>
+
+
+<Button
+
+variant="outline"
+
+colorPalette="red"
+
+width="full"
+
+onClick={()=>setDeleteRoomId(room.id)}
+
+>
+
+🗑️ Delete Room
 
 </Button>
 
 
 
+</Stack>
+
+)
+
+}
+
+
 
 </Stack>
 
-
 </PremiumCard>
 
-
 ))
-
-
 }
 
 
@@ -543,14 +681,109 @@ joiningRoom===room.id
 }
 
 
+<Dialog.Root
+  open={deleteRoomId !== null}
+  onOpenChange={(e)=> {
+    if(!e.open){
+      setDeleteRoomId(null);
+    }
+  }}
+>
+
+<Dialog.Backdrop />
+
+<Dialog.Positioner>
+
+<Dialog.Content
+  borderRadius="2xl"
+  p="2"
+  shadow="2xl"
+>
+
+<Dialog.Header>
+  <Stack gap="2">
+
+    <Dialog.Title>
+      🗑️ Delete Room
+    </Dialog.Title>
+
+    <Text color="gray.500" fontSize="sm">
+      Remove this study room permanently
+    </Text>
+
+  </Stack>
+</Dialog.Header>
+
+
+<Dialog.Body>
+
+<PremiumCard>
+
+<Text>
+  ⚠️ Are you sure you want to delete this room?
+</Text>
+
+<Text
+mt="2"
+color="gray.500"
+fontSize="sm"
+>
+All members will lose access and this action cannot be undone.
+</Text>
+
+</PremiumCard>
+
+</Dialog.Body>
+
+<Dialog.Footer>
+
+<HStack width="full" justify="end">
+
+<Button
+variant="outline"
+borderRadius="xl"
+onClick={()=>{
+ setDeleteRoomId(null);
+}}
+>
+Cancel
+</Button>
+
+
+<Button
+colorPalette="red"
+borderRadius="xl"
+onClick={()=>{
+ if(deleteRoomId){
+   deleteRoom(deleteRoomId);
+ }
+ setDeleteRoomId(null);
+}}
+>
+🗑️ Delete Room
+</Button>
+
+</HStack>
+
+</Dialog.Footer>
+
+</Dialog.Content>
+
+</Dialog.Positioner>
+
+</Dialog.Root>
+
+
 
 </Stack>
-
 
 );
 
 
+
 };
+
+
 
 
 export default Rooms;
