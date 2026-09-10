@@ -6,6 +6,7 @@ import app from "./app";
 import { Server } from "socket.io";
 import { socketAuth } from "./middleware/socketAuth.middleware";
 import { createStudySession } from "./models/studySession.model";
+import { createMessage } from "./models/message.model";
 
 const PORT = process.env.PORT || 3000;
 
@@ -163,6 +164,42 @@ socket.emit("current-studying-users", {
 
 });
 
+
+// CHAT MESSAGE
+
+socket.on(
+  "send-message",
+  async(data:{
+    roomId:number;
+    message:string;
+  })=>{
+
+
+    const user = (socket as any).user;
+
+
+    if(!user) return;
+
+
+    await createMessage(
+      data.roomId,
+      user.id,
+      data.message
+    );
+
+
+    io.to(`room-${data.roomId}`).emit(
+      "receive-message",
+      {
+        userName:user.name,
+        message:data.message,
+        createdAt:new Date()
+      }
+    );
+
+
+  }
+);
 
 
 
