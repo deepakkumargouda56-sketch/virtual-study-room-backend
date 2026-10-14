@@ -94,6 +94,9 @@ const formatDuration = (milliseconds:number)=>{
 
 io.on("connection",(socket)=>{
 
+  console.log("✅ SOCKET CONNECTED");
+  console.log((socket as any).user);
+
 
 console.info("Socket user connected");
 
@@ -169,13 +172,17 @@ socket.emit("current-studying-users", {
 
 socket.on(
   "send-message",
-  async(data:{
-    roomId:number;
-    message:string;
+   async(data:{
+   roomId:number;
+   message:string;
   })=>{
 
 
     const user = (socket as any).user;
+
+    console.log("📩 SEND MESSAGE EVENT");
+    console.log(data);
+    console.log(user);
 
 
     if(!user) return;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
 import socket from "../socket/socket";
 import { toaster } from "../components/Toaster";
 import PremiumCard from "../components/PremiumCard";
@@ -11,6 +12,7 @@ import {
   Button,
   SimpleGrid,
   Badge,
+  Input,
 } from "@chakra-ui/react";
 
 import api from "../api/axios";
@@ -37,6 +39,14 @@ interface OnlineUser {
 }
 
 
+interface Message {
+  id?:number;
+  name?:string;
+  userName?:string;
+  message:string;
+}
+
+
 
 const StudyRoom =()=>{
 
@@ -54,6 +64,37 @@ const [onlineUsers,setOnlineUsers]=useState<OnlineUser[]>([]);
 
 const [studyingUsers,setStudyingUsers]=useState<string[]>([]);
 
+const [messages,setMessages]=useState<Message[]>([]);
+
+const [newMessage,setNewMessage]=useState("");
+
+
+
+
+const sendMessage=()=>{
+
+console.log("SEND CLICKED", newMessage);
+
+
+if(!newMessage.trim())
+return;
+
+
+socket.emit(
+"send-message",
+{
+roomId:Number(id),
+message:newMessage
+}
+);
+
+
+setNewMessage("");
+
+};
+
+
+
 
 
 useEffect(()=>{
@@ -63,10 +104,12 @@ fetchRoom();
 
 fetchMembers();
 
+fetchMessages();
+
 
 
 socket.auth={
- token:localStorage.getItem("token"),
+token:localStorage.getItem("token"),
 };
 
 
@@ -75,11 +118,36 @@ socket.connect();
 
 
 
+
 socket.on("online-users",(data)=>{
+
+
+if(Array.isArray(data.users)){
 
 setOnlineUsers(data.users);
 
+}
+
 });
+
+
+
+
+
+socket.on("receive-message",(data)=>{
+
+
+setMessages(prev=>[
+
+...prev,
+
+data
+
+]);
+
+
+});
+
 
 
 
@@ -104,24 +172,34 @@ type:"success",
 
 
 
+
 socket.on("user-started-study",(data)=>{
 
 
 setStudyingUsers(prev=>{
 
+
 if(prev.includes(data.userName))
+
 return prev;
 
 
+
 return [
+
 ...prev,
+
 data.userName
+
 ];
 
+
 });
 
 
 });
+
+
 
 
 
@@ -132,13 +210,17 @@ socket.on("user-stopped-study",(data)=>{
 setStudyingUsers(prev=>
 
 prev.filter(
+
 name=>name!==data.userName
+
 )
 
 );
 
 
 });
+
+
 
 
 
@@ -146,25 +228,36 @@ name=>name!==data.userName
 socket.on("current-studying-users",(data)=>{
 
 
+if(Array.isArray(data.users)){
+
+
 setStudyingUsers(
 
 data.users.map(
+
 (user:any)=>user.userName
+
 )
 
 );
 
 
+}
+
+
 });
 
 
 
 
-socket.emit("join-room",{
 
+
+socket.emit(
+"join-room",
+{
 roomId:Number(id)
-
-});
+}
+);
 
 
 
@@ -174,6 +267,8 @@ return ()=>{
 
 
 socket.off("online-users");
+
+socket.off("receive-message");
 
 socket.off("study-completed");
 
@@ -190,26 +285,20 @@ socket.disconnect();
 };
 
 
-},[]);
 
-
-
-
-
-
+},[id]);
 const fetchRoom=async()=>{
 
 try{
 
-const response=
-await api.get(`/rooms/${id}`);
+const response = await api.get(`/rooms/${id}`);
 
 setRoom(response.data.room);
 
 
 }catch(error){
 
-console.error("Study room error:", error);
+console.error("Study room error:",error);
 
 }
 
@@ -219,23 +308,83 @@ console.error("Study room error:", error);
 
 
 
-
-
 const fetchMembers=async()=>{
+
 
 try{
 
-const response=
-await api.get(`/rooms/${id}/members`);
 
-setMembers(response.data.members);
+const response = await api.get(`/rooms/${id}/members`);
+
+
+setMembers(
+
+Array.isArray(response.data.members)
+
+? response.data.members
+
+: []
+
+);
+
 
 
 }catch(error){
 
-console.error("Study room error:", error);
+console.error("Members error:",error);
 
 }
+
+
+};
+
+
+
+
+
+
+const fetchMessages=async()=>{
+
+
+try{
+
+
+const response = await api.get(`/messages/${id}`);
+
+
+console.log(
+"MESSAGES RESPONSE:",
+response.data
+);
+
+
+
+setMessages(
+
+Array.isArray(response.data.messages)
+
+? response.data.messages
+
+: []
+
+);
+
+
+
+}catch(error){
+
+
+console.error(
+"Message error:",
+error
+);
+
+
+setMessages([]);
+
+
+}
+
 
 };
 
@@ -246,7 +395,9 @@ console.error("Study room error:", error);
 
 const startStudy=()=>{
 
+
 socket.emit("start-study");
+
 
 
 toaster.create({
@@ -264,9 +415,12 @@ type:"success",
 
 
 
+
 const stopStudy=()=>{
 
+
 socket.emit("stop-study");
+
 
 };
 
@@ -282,6 +436,7 @@ try{
 
 
 await api.post(`/rooms/${id}/leave`);
+
 
 
 socket.disconnect();
@@ -324,8 +479,8 @@ type:"error",
 
 
 
-return (
 
+return (
 
 <Stack
 
@@ -340,14 +495,9 @@ bgGradient="linear(to-br, blue.50, purple.50)"
 >
 
 
-
 <Heading>
-
 📚 Study Room
-
 </Heading>
-
-
 
 
 
@@ -356,9 +506,7 @@ bgGradient="linear(to-br, blue.50, purple.50)"
 {
 room &&
 
-
 <PremiumCard>
-
 
 <Stack gap="3">
 
@@ -386,15 +534,12 @@ room &&
 </Badge>
 
 
-
 </Stack>
 
 
 </PremiumCard>
 
 }
-
-
 
 
 
@@ -409,7 +554,6 @@ columns={{base:1,md:2}}
 gap="6"
 
 >
-
 
 
 
@@ -463,7 +607,6 @@ members.map(member=>(
 
 
 </PremiumCard>
-
 
 
 
@@ -524,10 +667,7 @@ onlineUsers.map(user=>(
 
 
 
-
 </SimpleGrid>
-
-
 
 
 
@@ -586,6 +726,152 @@ studyingUsers.map(name=>(
 </Stack>
 
 
+</PremiumCard>
+
+
+
+
+
+
+
+
+<PremiumCard>
+
+
+<Stack gap="4">
+
+
+<Heading size="md">
+
+💬 Room Chat
+
+</Heading>
+
+
+
+
+
+<Stack
+
+h="250px"
+
+overflowY="auto"
+
+borderWidth="1px"
+
+borderRadius="lg"
+
+p="4"
+
+>
+
+
+
+{
+
+messages.length===0
+
+?
+
+
+<Text>
+
+No messages yet
+
+</Text>
+
+
+:
+
+
+messages.map((msg,index)=>(
+
+
+<Text key={index}>
+
+
+<b>
+
+{msg.userName || msg.name || "User"}:
+
+</b>
+
+
+{" "}
+
+{msg.message}
+
+
+
+</Text>
+
+
+))
+
+
+}
+
+
+
+</Stack>
+
+
+
+
+
+
+
+<Stack direction="row" gap="3">
+
+
+<Input
+
+placeholder="Type a message..."
+
+value={newMessage}
+
+onChange={(e)=>setNewMessage(e.target.value)}
+
+
+onKeyDown={(e)=>{
+
+
+if(e.key==="Enter"){
+
+sendMessage();
+
+}
+
+
+}}
+
+
+/>
+
+
+
+
+
+<Button
+
+colorPalette="blue"
+
+onClick={sendMessage}
+
+>
+
+Send
+
+</Button>
+
+
+
+</Stack>
+
+
+
+</Stack>
+
 
 </PremiumCard>
 
@@ -604,6 +890,7 @@ columns={{base:1,md:3}}
 gap="4"
 
 >
+
 
 
 <Button
@@ -664,10 +951,7 @@ Leave Room
 
 
 
-
 </SimpleGrid>
-
-
 
 
 

@@ -52,6 +52,10 @@ export const login = async (req: Request, res: Response) => {
     }
  // Find user by email
     const user = await findUserByEmail(email);
+    console.log("LOGIN EMAIL:", email);
+    console.log("USER FOUND:", !!user);
+    console.log("PASSWORD HASH EXISTS:", !!user?.password);
+    console.log("HASH LENGTH:", user?.password?.length);
 
     // User not found
     if (!user) {
@@ -60,6 +64,7 @@ export const login = async (req: Request, res: Response) => {
       });
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
+    console.log("PASSWORD MATCH:", isPasswordValid);
 
 if (!isPasswordValid) {
   return res.status(401).json({

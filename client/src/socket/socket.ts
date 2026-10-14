@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const socket = io("https://virtual-study-room-backend-3.onrender.com",{
+const socket = io("http://localhost:3000",{
   autoConnect: false,
 });
 

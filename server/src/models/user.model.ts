@@ -25,6 +25,8 @@ export const createUser = async (user: User) => {
 };
 
 export const findUserByEmail = async (email: string) => {
+
+  
   const conn = await pool.getConnection();
 
   try {
